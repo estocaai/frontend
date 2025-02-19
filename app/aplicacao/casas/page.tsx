@@ -100,7 +100,7 @@ function Casas() {
                     <p className="text-gray-500">Nenhuma casa cadastrada.</p>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-4 mb-28">
                     {casas.map((casa) => (
                         <div
                             key={casa.id}

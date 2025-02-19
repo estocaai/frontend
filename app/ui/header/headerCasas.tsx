@@ -28,7 +28,7 @@ export default function HeaderCasas() {
           >
             &times;
           </button>
-          <FormCasas />
+          <FormCasas onClose={() => setVisible(false)} />
           <button
             onClick={() => setVisible(false)}
             className="w-full border-solid border-2 border-azul1 text-azul1 font-semibold py-2 px-4 rounded-lg hover:bg-azul2 focus:outline-none focus:ring-2 focus:ring-azul2"
