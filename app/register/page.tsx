@@ -58,7 +58,7 @@ export default function Register() {
             <input
               id="name"
               type="text"
-              placeholder="Sigma boy"
+              placeholder="Exemplo: João da Silva"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-sm"
@@ -74,7 +74,7 @@ export default function Register() {
             <input
               id="email"
               type="email"
-              placeholder="john@example.com"
+              placeholder="joao@exemplo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-sm"
@@ -91,7 +91,7 @@ export default function Register() {
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="********************"
+                placeholder="************"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-sm"

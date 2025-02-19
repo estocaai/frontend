@@ -70,7 +70,7 @@ export default function FormCasas({ onClose }: FormCasasProps) {
           <label className="block text-sm font-medium text-gray-700">Nome da casa</label>
           <input
             type="text"
-            placeholder="Casa da Julia"
+            placeholder="Casa do João"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-azul1 focus:border-azul1 text-sm"
@@ -109,7 +109,7 @@ export default function FormCasas({ onClose }: FormCasasProps) {
           <label className="block text-sm font-medium text-gray-700">Bairro</label>
           <input
             type="text"
-            placeholder="Vila Olímpia"
+            placeholder="Vila João"
             value={bairro}
             onChange={(e) => setBairro(e.target.value)}
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-azul1 focus:border-azul1 text-sm"
@@ -122,7 +122,7 @@ export default function FormCasas({ onClose }: FormCasasProps) {
           <label className="block text-sm font-medium text-gray-700">Rua</label>
           <input
             type="text"
-            placeholder="Rua Quatá, 300"
+            placeholder="Rua João"
             value={rua}
             onChange={(e) => setRua(e.target.value)}
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-azul1 focus:border-azul1 text-sm"
@@ -148,7 +148,7 @@ export default function FormCasas({ onClose }: FormCasasProps) {
           <label className="block text-sm font-medium text-gray-700">Complemento</label>
           <input
             type="text"
-            placeholder="Apto 220"
+            placeholder="Apartamento 1"
             value={complemento}
             onChange={(e) => setComplemento(e.target.value)}
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-azul1 focus:border-azul1 text-sm"
