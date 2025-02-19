@@ -26,24 +26,24 @@ export default function FormCasas({ onClose }: FormCasasProps) {
     }
 
     try {
-      await axios.post(
-        'http://localhost:8080/casas',
-        {
-          nome,
-          estado,
-          cidade,
-          bairro,
-          rua,
-          numero: parseInt(numero), // Converte para número
-          complemento,
-        },
-        {
-          headers: {
-            Authorization: `${token}`,
-            "Content-Type": "application/json"
-          },
-        }
-      );
+        const response = await axios.post(
+            'https://estocaai-0a5bc1c57b9e.herokuapp.com/casas',
+            {
+                nome,
+                estado,
+                cidade,
+                bairro,
+                rua,
+                numero: parseInt(numero), // Converte para número
+                complemento,
+            },
+            {
+                headers: {
+                    Authorization: `${token}`,
+                    "Content-Type": "application/json"
+                },
+            }
+        );
 
       // Limpar os campos após o envio bem-sucedido
       setNome('');
