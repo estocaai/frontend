@@ -11,7 +11,7 @@ export default function Profile() {
 
   useEffect(() => {
     // Buscar dados do usuário na API
-    fetch("http://localhost:8080/users/details", {
+    fetch("https://estocaai-0a5bc1c57b9e.herokuapp.com/users/details", {
       headers: { Authorization: `${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
@@ -28,7 +28,7 @@ export default function Profile() {
 
   const handleSaveChanges = () => {
     // Enviar alterações para API
-    fetch("http://localhost:8080/users/details", {
+    fetch("https://estocaai-0a5bc1c57b9e.herokuapp.com/users/details", {
       method: "PUT",
       headers: {
         Authorization: `${localStorage.getItem("token")}`,

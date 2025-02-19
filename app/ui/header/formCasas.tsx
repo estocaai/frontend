@@ -23,7 +23,7 @@ export default function FormCasas() {
 
         try {
             const response = await axios.post(
-                'http://localhost:8080/casas',
+                'https://estocaai-0a5bc1c57b9e.herokuapp.com/casas',
                 {
                     nome,
                     estado,

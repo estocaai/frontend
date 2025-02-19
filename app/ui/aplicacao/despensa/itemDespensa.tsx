@@ -35,7 +35,7 @@ export default function ItemDespensa({
         return;
       }
 
-      const response = await fetch(`http://localhost:8080/casas/${CasaId}/despensa/produtos/${Id}`, {
+      const response = await fetch(`https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${CasaId}/despensa/produtos/${Id}`, {
         method: 'PUT', // Mantemos como PUT, agora que o backend aceita JSON
         headers: {
           'Content-Type': 'application/json',

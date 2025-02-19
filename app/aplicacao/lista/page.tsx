@@ -33,11 +33,11 @@ export default function Page() {
         return;
       }
       try {
-        const casasResponse = await axios.get("http://localhost:8080/casas", {
+        const casasResponse = await axios.get("https://estocaai-0a5bc1c57b9e.herokuapp.com/casas", {
           headers: { Authorization: token },
         });
         setCasas(casasResponse.data);
-        const userResponse = await axios.get("http://localhost:8080/users/details", {
+        const userResponse = await axios.get("https://estocaai-0a5bc1c57b9e.herokuapp.com/users/details", {
           headers: { Authorization: token },
         });
         if (userResponse.data.casaEscolhida) {
@@ -63,13 +63,13 @@ export default function Page() {
   
       try {
         const listaResponse = await axios.get(
-          `http://localhost:8080/casas/${casaId}/lista-de-compras`,
+          `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras`,
           { headers: { Authorization: token } }
         );
         const lista = listaResponse.data;
   
         const produtosResponse = await axios.get(
-          `http://localhost:8080/casas/${casaId}/lista-de-compras/produtos`,
+          `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras/produtos`,
           { headers: { Authorization: token } }
         );
   
@@ -104,7 +104,7 @@ export default function Page() {
     }
     try {
       await axios.put(
-        "http://localhost:8080/selecionar/casa",
+        "https://estocaai-0a5bc1c57b9e.herokuapp.com/selecionar/casa",
         { casaId: novaCasa },
         { headers: { Authorization: token } }
       );
@@ -128,12 +128,12 @@ export default function Page() {
     try {
       for (const produto of produtosSelecionados) {
         await axios.post(
-          `http://localhost:8080/casas/${casaId}/despensa/produtos/${produto.id}`,
+          `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/despensa/produtos/${produto.id}`,
           { quantidade: produto.quantidade },
           { headers: { Authorization: token } }
         );
         await axios.delete(
-          `http://localhost:8080/casas/${casaId}/lista-de-compras/produtos/${produto.id}?quantidade=${produto.quantidade}`,
+          `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras/produtos/${produto.id}?quantidade=${produto.quantidade}`,
           { headers: { Authorization: token } }
         );
       }
@@ -153,7 +153,7 @@ export default function Page() {
       if (!token || !casaId) return;
       try {
         await axios.put(
-          `http://localhost:8080/casas/${casaId}/lista-de-compras/produtos/${selectedProduto.id}?quantidade=${tempQuantidade}`,
+          `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras/produtos/${selectedProduto.id}?quantidade=${tempQuantidade}`,
           {},
           { headers: { Authorization: token } }
         );
@@ -182,7 +182,7 @@ export default function Page() {
     if (!token) return;
     try {
       await axios.delete(
-        `http://localhost:8080/casas/${casaId}/lista-de-compras/produtos/${selectedProduto.id}?quantidade=${selectedProduto.quantidade}`,
+        `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras/produtos/${selectedProduto.id}?quantidade=${selectedProduto.quantidade}`,
         { headers: { Authorization: token } }
       );
       setProdutos((prev) =>
@@ -220,7 +220,7 @@ export default function Page() {
       await Promise.all(
         produtosToDelete.map(produto =>
           axios.delete(
-            `http://localhost:8080/casas/${casaId}/lista-de-compras/produtos/${produto.id}?quantidade=${produto.quantidade}`,
+            `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras/produtos/${produto.id}?quantidade=${produto.quantidade}`,
             { headers: { Authorization: token } }
           )
         )

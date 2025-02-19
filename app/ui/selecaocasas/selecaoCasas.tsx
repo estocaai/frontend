@@ -26,13 +26,13 @@ export default function SelecaoCasas({ onCasaSelecionada }: { onCasaSelecionada:
         }
 
         // Buscar todas as casas
-        const casasResponse = await axios.get("http://localhost:8080/casas", {
+        const casasResponse = await axios.get("https://estocaai-0a5bc1c57b9e.herokuapp.com/casas", {
           headers: { Authorization: `${token}` },
         });
         setCasas(casasResponse.data);
 
         // Buscar detalhes do usuário para obter a casa selecionada
-        const userResponse = await axios.get("http://localhost:8080/users/details", {
+        const userResponse = await axios.get("https://estocaai-0a5bc1c57b9e.herokuapp.com/users/details", {
           headers: { Authorization: `${token}` },
         });
 
@@ -61,7 +61,7 @@ export default function SelecaoCasas({ onCasaSelecionada }: { onCasaSelecionada:
       }
 
       await axios.put(
-        "http://localhost:8080/selecionar/casa",
+        "https://estocaai-0a5bc1c57b9e.herokuapp.com/selecionar/casa",
         { casaId: selecionada },
         { headers: { Authorization: `${token}` } }
       );

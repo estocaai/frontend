@@ -39,7 +39,7 @@ export default function Page() {
           return;
         }
         setError(null);
-        const response = await axios.get("http://localhost:8080/users/details", {
+        const response = await axios.get("https://estocaai-0a5bc1c57b9e.herokuapp.com/users/details", {
           headers: { Authorization: `${token}` },
         });
         if (!response.data.casaEscolhida) {
@@ -69,7 +69,7 @@ export default function Page() {
         return;
       }
       const despensaResponse = await axios.get(
-        `http://localhost:8080/casas/${casaSelecionada}/despensa`,
+        `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaSelecionada}/despensa`,
         { headers: { Authorization: `${token}` } }
       );
       const { produtosIds, produtosQuantidades } = despensaResponse.data;
@@ -79,7 +79,7 @@ export default function Page() {
         return;
       }
       const produtosResponse = await axios.get(
-        `http://localhost:8080/casas/${casaSelecionada}/despensa/produtos`,
+        `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaSelecionada}/despensa/produtos`,
         {
           headers: { Authorization: `${token}` },
           params: { ids: produtosIds.join(",") },
