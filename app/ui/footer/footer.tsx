@@ -1,8 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { HomeSimpleDoor, Closet, ListSelect, User, MinusCircle, PlusCircle } from "iconoir-react";
+import {
+  HomeSimpleDoor,
+  Closet,
+  ListSelect,
+  User,
+  MinusCircle,
+  PlusCircle,
+} from "iconoir-react";
 import Add from "./add";
 import Item from "./item";
 import clsx from "clsx";
@@ -18,16 +25,20 @@ interface Produto {
 export default function Footer() {
   const [showPopout, setShowPopout] = useState(false);
   const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [produtosFiltrados, setProdutosFiltrados] = useState<Produto[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
   const [showSelectionPopout, setShowSelectionPopout] = useState(false);
   const [quantidade, setQuantidade] = useState(1);
   const [casaSelecionada, setCasaSelecionada] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar casa selecionada pelo usuário
+  // Referência do contêiner de produtos para manipular o scroll
+  const produtosContainerRef = useRef<HTMLDivElement>(null);
+
+  const PAGE_SIZE = 20;
+
   useEffect(() => {
     const fetchCasaSelecionada = async () => {
       try {
@@ -36,38 +47,45 @@ export default function Footer() {
           setError("Usuário não autenticado.");
           return;
         }
-  
-        setError(null); // Resetar erro antes da requisição
-  
-        const response = await axios.get("https://estocaai-0a5bc1c57b9e.herokuapp.com/users/details", {
-          headers: { Authorization: `${token}` },
-        });
-  
+        setError(null);
+        const response = await axios.get(
+          "https://estocaai-0a5bc1c57b9e.herokuapp.com/users/details",
+          {
+            headers: { Authorization: token },
+          }
+        );
         setCasaSelecionada(response.data.casaEscolhida || null);
       } catch (err) {
-        console.error("Erro ao buscar casa selecionada:", err);
         setError("Falha ao carregar a casa selecionada.");
       }
     };
-  
     fetchCasaSelecionada();
   }, []);
 
-  const fetchProdutos = async () => {
+  // Buscar produtos de forma paginada
+  // Se pageNumber=0, substitui a lista; senão, concatena no final
+  const fetchProdutosPaginados = async (
+    pageNumber: number,
+    search: string
+  ): Promise<void> => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token") || "";
-      const response = await fetch("https://estocaai-0a5bc1c57b9e.herokuapp.com/produtos", {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
+      const url = `https://estocaai-0a5bc1c57b9e.herokuapp.com/produtos/paginado?page=${pageNumber}&size=${PAGE_SIZE}&search=${encodeURIComponent(
+        search
+      )}`;
+      const resp = await fetch(url, { headers: { Authorization: token } });
+      if (!resp.ok) {
         throw new Error("Erro ao buscar produtos");
       }
-      const data: Produto[] = await response.json();
-      setProdutos(data);
-      setProdutosFiltrados(data);
+      const data = await resp.json();
+      const newProducts: Produto[] = data.content ?? data;
+
+      if (pageNumber === 0) {
+        setProdutos(newProducts);
+      } else {
+        setProdutos((prev) => [...prev, ...newProducts]);
+      }
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
     } finally {
@@ -75,15 +93,44 @@ export default function Footer() {
     }
   };
 
+  // Abrir popout, resetar página e buscar a primeira página
   const handleAddClick = () => {
     setShowPopout(true);
-    fetchProdutos();
+    setPage(0);
+    fetchProdutosPaginados(0, searchTerm);
   };
 
+  // Fechar popout, limpar busca e lista
   const closePopout = () => {
     setShowPopout(false);
     setSearchTerm("");
-    setProdutosFiltrados(produtos);
+    setProdutos([]);
+    setPage(0);
+  };
+
+  // Sempre que digitar no campo de busca, resetamos para a página 0
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    setPage(0);
+    fetchProdutosPaginados(0, term);
+  };
+
+  // Incrementa a página, pega apenas produtos novos e mantém o scroll
+  const handleCarregarMais = async () => {
+    if (!produtosContainerRef.current) return;
+
+    const container = produtosContainerRef.current;
+    const oldScrollTop = container.scrollTop;
+
+    const nextPage = page + 1;
+    setPage(nextPage);
+
+    await fetchProdutosPaginados(nextPage, searchTerm);
+
+    if (produtosContainerRef.current) {
+      produtosContainerRef.current.scrollTop = oldScrollTop;
+    }
   };
 
   const handleProdutoSelecionado = (produto: Produto) => {
@@ -97,18 +144,9 @@ export default function Footer() {
     setSelectedProduto(null);
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const term = event.target.value.toLowerCase();
-    setSearchTerm(term);
-    setProdutosFiltrados(
-      produtos.filter((produto) => produto.nome.toLowerCase().includes(term))
-    );
-  };
+  const incrementar = () => setQuantidade((q) => q + 1);
+  const decrementar = () => setQuantidade((q) => (q > 1 ? q - 1 : q));
 
-  const incrementar = () => setQuantidade(quantidade + 1);
-  const decrementar = () => quantidade > 1 && setQuantidade(quantidade - 1);
-
-  // Função para adicionar produto à despensa
   const adicionarProdutoDespensa = async () => {
     if (!selectedProduto) return;
     try {
@@ -124,11 +162,9 @@ export default function Footer() {
           body: JSON.stringify({ quantidade }),
         }
       );
-  
       if (!response.ok) {
         throw new Error("Erro ao adicionar produto à despensa");
       }
-  
       alert("Produto adicionado à despensa com sucesso!");
       closeSelectionPopout();
     } catch (error) {
@@ -137,7 +173,6 @@ export default function Footer() {
     }
   };
 
-  // Função para adicionar produto à lista de compras
   const adicionarProdutoLista = async () => {
     if (!selectedProduto) return;
     try {
@@ -152,15 +187,13 @@ export default function Footer() {
           },
         }
       );
-  
       if (!response.ok) {
         throw new Error("Erro ao adicionar produto à lista de compras");
       }
-  
       alert("Produto adicionado à Lista de Compras com sucesso!");
       closeSelectionPopout();
     } catch (error) {
-      console.error("Erro ao adicionar produto à lista de compras:", error);
+      console.error("Erro ao adicionar produto à Lista de Compras:", error);
       alert("Erro ao adicionar o produto à Lista de Compras. Tente novamente.");
     }
   };
@@ -180,7 +213,6 @@ export default function Footer() {
         </div>
       </footer>
 
-      {/* Popout para adicionar produtos */}
       <div className="formAdd">
         <div
           className={clsx(
@@ -191,12 +223,15 @@ export default function Footer() {
           <div
             className={clsx(
               "popout bg-white p-6 w-full max-w-none transform transition-transform duration-500 ease-in-out",
-              showPopout ? "translate-y-0 h-[80%]" : "translate-y-full h-80%]"
+              showPopout ? "translate-y-0 h-[80%]" : "translate-y-full"
             )}
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Adicionar Produto</h2>
-              <button onClick={closePopout} className="text-gray-600 hover:text-gray-800 text-2xl">
+              <button
+                onClick={closePopout}
+                className="text-gray-600 hover:text-gray-800 text-2xl"
+              >
                 &times;
               </button>
             </div>
@@ -211,22 +246,40 @@ export default function Footer() {
               />
             </div>
 
-            {loading ? (
+            {produtos.length === 0 && loading ? (
+              // Caso especial: se ainda não carregou nada e está buscando a 1ª página
               <p>Carregando produtos...</p>
             ) : (
-              <ul className="overflow-y-auto max-h-[50vh]">
-                {produtosFiltrados.map((produto) => (
-                  <li key={produto.id}>
-                    <ItemAdicionar produto={produto} onAddClick={handleProdutoSelecionado} />
-                  </li>
+              <div
+                className="flex flex-col max-h-[50vh] overflow-y-auto"
+                ref={produtosContainerRef}
+              >
+                {produtos.map((produto) => (
+                  <div key={produto.id}>
+                    <ItemAdicionar
+                      produto={produto}
+                      onAddClick={handleProdutoSelecionado}
+                    />
+                  </div>
                 ))}
-              </ul>
+
+                {loading && produtos.length > 0 && (
+                  <p className="text-center my-2">Carregando mais produtos...</p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleCarregarMais}
+                  className="mt-4 bg-[#6CB0BE] text-white font-semibold py-2 rounded-lg self-center w-full"
+                >
+                  Carregar mais
+                </button>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Popout para escolher onde adicionar */}
       {selectedProduto && (
         <div
           className={clsx(
@@ -236,18 +289,22 @@ export default function Footer() {
         >
           <div className="popout bg-white p-6 w-96 rounded-lg shadow-lg">
             <h2 className="text-xl font-bold">{selectedProduto.nome}</h2>
-
             <div className="flex items-center justify-center gap-4 my-4">
-              <button onClick={decrementar} className="text-gray-700 text-2xl hover:text-gray-900">
+              <button
+                onClick={decrementar}
+                className="text-gray-700 text-2xl hover:text-gray-900"
+              >
                 <MinusCircle />
               </button>
               <span className="text-lg font-semibold">{quantidade}</span>
-              <button onClick={incrementar} className="text-gray-700 text-2xl hover:text-gray-900">
+              <button
+                onClick={incrementar}
+                className="text-gray-700 text-2xl hover:text-gray-900"
+              >
                 <PlusCircle />
               </button>
             </div>
 
-            {/* Botões de ação */}
             <div className="flex flex-col gap-3">
               <button
                 onClick={adicionarProdutoDespensa}
@@ -255,12 +312,14 @@ export default function Footer() {
               >
                 Adicionar à Despensa
               </button>
+
               <button
                 onClick={adicionarProdutoLista}
                 className="w-full border border-[#6CB0BE] text-[#6CB0BE] font-semibold py-2 rounded-lg"
               >
                 Adicionar à Lista de Compras
               </button>
+
               <button
                 onClick={closeSelectionPopout}
                 className="w-full border border-red-500 text-red-500 font-semibold py-2 rounded-lg hover:bg-red-500 hover:text-white"
