@@ -331,15 +331,17 @@ export default function Page() {
         </ul>
       </div>
 
-      {/* Confirmar Compra Button */}
-      <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-10">
-        <button
-          onClick={() => setIsConfirmarPressed(true)}
-          className="bg-white border border-azul1 text-azul1 px-6 py-3 rounded-md font-medium hover:bg-azul1 hover:text-white transition-colors duration-300"
-        >
-          Confirmar Compra
-        </button>
-      </div>
+      {/* Confirmar Compra Button (Somente se houver produtos) */}
+      {displayedProdutos.length > 0 && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-10">
+          <button
+            onClick={() => setIsConfirmarPressed(true)}
+            className="bg-white border border-azul1 text-azul1 px-6 py-3 rounded-md font-medium hover:bg-azul1 hover:text-white transition-colors duration-300"
+          >
+            Confirmar Compra
+          </button>
+        </div>
+      )}
 
       {/* Confirmar Compra Modal */}
       {isConfirmarPressed && (
