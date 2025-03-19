@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { MapPin, NavArrowDown, Edit, Trash, PlusCircle, MinusCircle } from "iconoir-react";
+import { MapPin, NavArrowDown, EditPencil, Trash, PlusCircle, MinusCircle } from "iconoir-react";
 import axios from "axios";
+import Footer from '@/app/ui/footer/footer';
 
 interface Produto {
   id: string;
@@ -24,12 +25,13 @@ export default function Page() {
   const [casas, setCasas] = useState<{ id: string; nome: string }[]>([]);
   const [casaError, setCasaError] = useState<string | null>(null);
 
-  // Estados adicionados para feedback de carregamento e erro na busca dos produtos
+  // Estados para feedback de carregamento e erro na busca dos produtos
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Buscar casas e definir a casa selecionada
   useEffect(() => {
     const fetchCasas = async () => {
       const token = localStorage.getItem("token");
@@ -59,46 +61,50 @@ export default function Page() {
     fetchCasas();
   }, []);
 
+  // Função para buscar os produtos da lista de compras
+  const fetchListaProdutos = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !casaId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const listaResponse = await axios.get(
+        `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras`,
+        { headers: { Authorization: token } }
+      );
+      const lista = listaResponse.data;
+
+      const produtosResponse = await axios.get(
+        `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras/produtos`,
+        { headers: { Authorization: token } }
+      );
+
+      // Mapeia as quantidades dos produtos conforme os ids
+      const produtosQuantMap = lista.produtosIds.reduce((acc: Record<string, number>, id: string, index: number) => {
+        acc[id] = lista.produtosQuantidades[index];
+        return acc;
+      }, {});
+
+      const mergedProdutos = produtosResponse.data.map((produto: any) => ({
+        ...produto,
+        quantidade: produtosQuantMap[produto.id] || 0,
+        checked: false,
+      }));
+
+      setProdutos(mergedProdutos);
+    } catch (error: any) {
+      console.error("Error fetching lista or produtos:", error.response?.data || error.message);
+      setError("Erro ao buscar produtos da lista de compras.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Busca os produtos sempre que a casa selecionada for definida ou alterada
   useEffect(() => {
-    const fetchListaProdutos = async () => {
-      const token = localStorage.getItem("token");
-      if (!token || !casaId) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const listaResponse = await axios.get(
-          `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras`,
-          { headers: { Authorization: token } }
-        );
-        const lista = listaResponse.data;
-
-        const produtosResponse = await axios.get(
-          `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras/produtos`,
-          { headers: { Authorization: token } }
-        );
-
-        // Mapeia as quantidades dos produtos conforme os ids
-        const produtosQuantMap = lista.produtosIds.reduce((acc: Record<string, number>, id: string, index: number) => {
-          acc[id] = lista.produtosQuantidades[index];
-          return acc;
-        }, {});
-
-        const mergedProdutos = produtosResponse.data.map((produto: any) => ({
-          ...produto,
-          quantidade: produtosQuantMap[produto.id] || 0,
-          checked: false,
-        }));
-
-        setProdutos(mergedProdutos);
-      } catch (error: any) {
-        console.error("Error fetching lista or produtos:", error.response?.data || error.message);
-        setError("Erro ao buscar produtos da lista de compras.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchListaProdutos();
+    if (casaId) {
+      fetchListaProdutos();
+    }
   }, [casaId]);
 
   const handleCasaChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -247,6 +253,9 @@ export default function Page() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      
+      <Footer onProductAdded={fetchListaProdutos} />
+
       {/* Header Section with Search and Casa Selection */}
       <div className="p-8 bg-white">
         <div className="flex items-center justify-between">
@@ -317,7 +326,7 @@ export default function Page() {
                     {produto.quantidade} {produto.unidadeMedida}
                   </p>
                   <button onClick={() => handleEditProduto(produto)} className="hover:text-black">
-                    <Edit className="w-5 h-5 text-gray-600" />
+                    <EditPencil className="w-5 h-5 text-gray-600" />
                   </button>
                   <button onClick={() => handleExcluirProduto(produto)} className="hover:text-black">
                     <Trash className="w-5 h-5 text-red-600" />

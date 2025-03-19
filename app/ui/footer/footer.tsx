@@ -22,7 +22,13 @@ interface Produto {
   imagem?: string;
 }
 
-export default function Footer() {
+// Definindo as props para o Footer – onProductAdded é opcional
+interface FooterProps {
+  onProductAdded?: () => Promise<void>;
+  onDespensaUpdated?: () => Promise<void>;
+}
+
+export default function Footer({ onProductAdded, onDespensaUpdated }: FooterProps) {
   const [showPopout, setShowPopout] = useState(false);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,7 +69,6 @@ export default function Footer() {
   }, []);
 
   // Buscar produtos de forma paginada
-  // Se pageNumber=0, substitui a lista; senão, concatena no final
   const fetchProdutosPaginados = async (
     pageNumber: number,
     search: string
@@ -108,7 +113,6 @@ export default function Footer() {
     setPage(0);
   };
 
-  // Sempre que digitar no campo de busca, resetamos para a página 0
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
@@ -116,7 +120,6 @@ export default function Footer() {
     fetchProdutosPaginados(0, term);
   };
 
-  // Incrementa a página, pega apenas produtos novos e mantém o scroll
   const handleCarregarMais = async () => {
     if (!produtosContainerRef.current) return;
 
@@ -147,8 +150,39 @@ export default function Footer() {
   const incrementar = () => setQuantidade((q) => q + 1);
   const decrementar = () => setQuantidade((q) => (q > 1 ? q - 1 : q));
 
+  // Função para adicionar produto à Lista de Compras
+  const adicionarProdutoLista = async () => {
+    if (!selectedProduto || !casaSelecionada) return;
+    try {
+      const token = localStorage.getItem("token") || "";
+      const response = await fetch(
+        `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaSelecionada}/lista-de-compras/produtos/${selectedProduto.id}?quantidade=${quantidade}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Erro ao adicionar produto à lista de compras");
+      }
+      alert("Produto adicionado à Lista de Compras com sucesso!");
+      closeSelectionPopout();
+      // Chama o callback para atualizar a Lista de Compras, se fornecido
+      if (onProductAdded) {
+        await onProductAdded();
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar produto à Lista de Compras:", error);
+      alert("Erro ao adicionar o produto à Lista de Compras. Tente novamente.");
+    }
+  };
+
+  // Função para adicionar produto à Despensa
   const adicionarProdutoDespensa = async () => {
-    if (!selectedProduto) return;
+    if (!selectedProduto || !casaSelecionada) return;
     try {
       const token = localStorage.getItem("token") || "";
       const response = await fetch(
@@ -167,34 +201,13 @@ export default function Footer() {
       }
       alert("Produto adicionado à despensa com sucesso!");
       closeSelectionPopout();
+      // Atualiza a página da despensa se a função estiver presente
+      if (onDespensaUpdated) {
+        await onDespensaUpdated();
+      }
     } catch (error) {
       console.error("Erro ao adicionar produto à despensa:", error);
       alert("Erro ao adicionar o produto. Tente novamente.");
-    }
-  };
-
-  const adicionarProdutoLista = async () => {
-    if (!selectedProduto) return;
-    try {
-      const token = localStorage.getItem("token") || "";
-      const response = await fetch(
-        `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaSelecionada}/lista-de-compras/produtos/${selectedProduto.id}?quantidade=${quantidade}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Erro ao adicionar produto à lista de compras");
-      }
-      alert("Produto adicionado à Lista de Compras com sucesso!");
-      closeSelectionPopout();
-    } catch (error) {
-      console.error("Erro ao adicionar produto à Lista de Compras:", error);
-      alert("Erro ao adicionar o produto à Lista de Compras. Tente novamente.");
     }
   };
 
@@ -247,7 +260,6 @@ export default function Footer() {
             </div>
 
             {produtos.length === 0 && loading ? (
-              // Caso especial: se ainda não carregou nada e está buscando a 1ª página
               <p>Carregando produtos...</p>
             ) : (
               <div
