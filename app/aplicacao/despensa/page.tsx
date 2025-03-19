@@ -120,7 +120,7 @@ export default function Page() {
     <div>
       {/* Atualiza a casa selecionada ao trocar */}
       <HeaderDepensa onCasaSelecionada={atualizarCasaSelecionada} />
-      <Footer onDespensaUpdated={fetchItens} />
+      <Footer casaSelecionada={casaSelecionada} onDespensaUpdated={fetchItens} />
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">

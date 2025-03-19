@@ -254,7 +254,7 @@ export default function Page() {
   return (
     <div className="flex flex-col min-h-screen">
       
-      <Footer onProductAdded={fetchListaProdutos} />
+      <Footer casaSelecionada={casaId} onProductAdded={fetchListaProdutos} />
 
       {/* Header Section with Search and Casa Selection */}
       <div className="p-8 bg-white">

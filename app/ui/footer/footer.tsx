@@ -26,6 +26,7 @@ interface Produto {
 interface FooterProps {
   onProductAdded?: () => Promise<void>;
   onDespensaUpdated?: () => Promise<void>;
+  casaSelecionada?: string | null;
 }
 
 export default function Footer({ onProductAdded, onDespensaUpdated }: FooterProps) {
