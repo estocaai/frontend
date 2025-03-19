@@ -179,7 +179,7 @@ export default function Page() {
               </li>
             ))
         ) : (
-          <p>Despensa vazia :(</p>
+          <p>Despensa vazia</p>
         )}
       </ul>
     </div>

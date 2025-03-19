@@ -23,6 +23,11 @@ export default function Page() {
   const [casaId, setCasaId] = useState<string>("");
   const [casas, setCasas] = useState<{ id: string; nome: string }[]>([]);
   const [casaError, setCasaError] = useState<string | null>(null);
+
+  // Estados adicionados para feedback de carregamento e erro na busca dos produtos
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -58,39 +63,41 @@ export default function Page() {
     const fetchListaProdutos = async () => {
       const token = localStorage.getItem("token");
       if (!token || !casaId) return;
-
-      // console.log("casaID" , casaId);
-  
+      setLoading(true);
+      setError(null);
       try {
         const listaResponse = await axios.get(
           `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras`,
           { headers: { Authorization: token } }
         );
         const lista = listaResponse.data;
-  
+
         const produtosResponse = await axios.get(
           `https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${casaId}/lista-de-compras/produtos`,
           { headers: { Authorization: token } }
         );
-  
-        // Build a map from produto id to its quantity
+
+        // Mapeia as quantidades dos produtos conforme os ids
         const produtosQuantMap = lista.produtosIds.reduce((acc: Record<string, number>, id: string, index: number) => {
           acc[id] = lista.produtosQuantidades[index];
           return acc;
         }, {});
-  
+
         const mergedProdutos = produtosResponse.data.map((produto: any) => ({
           ...produto,
           quantidade: produtosQuantMap[produto.id] || 0,
           checked: false,
         }));
-  
+
         setProdutos(mergedProdutos);
       } catch (error: any) {
         console.error("Error fetching lista or produtos:", error.response?.data || error.message);
+        setError("Erro ao buscar produtos da lista de compras.");
+      } finally {
+        setLoading(false);
       }
     };
-  
+
     fetchListaProdutos();
   }, [casaId]);
 
@@ -146,7 +153,7 @@ export default function Page() {
       );
     }
   };
-  
+
   const handleSaveQuantidade = async () => {
     if (selectedProduto !== null && tempQuantidade !== null) {
       const token = localStorage.getItem("token");
@@ -242,46 +249,48 @@ export default function Page() {
     <div className="flex flex-col min-h-screen">
       {/* Header Section with Search and Casa Selection */}
       <div className="p-8 bg-white">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold text-cinza1">Lista</h2>
-        <div className="relative bg-white w-32">
-          <MapPin className="text-xs text-azul1 absolute left-2 top-1/2 transform -translate-y-1/2" />
-          <select
-            value={casaId || ""}
-            onChange={handleCasaChange}
-            className="w-full appearance-none text-cinza1 text-xs bg-white pl-8 pr-8 py-1 focus:outline-none"
-          >
-            <option value="" disabled>
-              Selecione uma casa
-            </option>
-            {casas.map((casa) => (
-              <option key={casa.id} value={casa.id}>
-                {casa.nome}
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold text-cinza1">Lista</h2>
+          <div className="relative bg-white w-32">
+            <MapPin className="text-xs text-azul1 absolute left-2 top-1/2 transform -translate-y-1/2" />
+            <select
+              value={casaId || ""}
+              onChange={handleCasaChange}
+              className="w-full appearance-none text-cinza1 text-xs bg-white pl-8 pr-8 py-1 focus:outline-none"
+            >
+              <option value="" disabled>
+                Selecione uma casa
               </option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-            <NavArrowDown className="text-base text-cinza1" />
+              {casas.map((casa) => (
+                <option key={casa.id} value={casa.id}>
+                  {casa.nome}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+              <NavArrowDown className="text-base text-cinza1" />
+            </div>
           </div>
         </div>
+        <div className="mt-8">
+          <input
+            type="text"
+            placeholder="Buscar produto..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6CB0BE]"
+          />
+        </div>
       </div>
-      <div className="mt-8">
-        <input
-          type="text"
-          placeholder="Buscar produto..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-					className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6CB0BE]"
-					/>
-      </div>
-    </div>
 
       {/* Produtos List */}
       <div className="flex-1 p-8 mt-[-25px]">
         <ul className="space-y-4">
-          {displayedProdutos.length === 0 ? (
-            <p>Sem produtos para exibir.</p>
-          ) : (
+          {error ? (
+            <p className="text-red-500">{error}</p>
+          ) : loading ? (
+            <p>Carregando itens...</p>
+          ) : displayedProdutos.length > 0 ? (
             displayedProdutos.map((produto) => (
               <li
                 key={produto.id}
@@ -308,14 +317,16 @@ export default function Page() {
                     {produto.quantidade} {produto.unidadeMedida}
                   </p>
                   <button onClick={() => handleEditProduto(produto)} className="hover:text-black">
-                      <Edit className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <button onClick={() => handleExcluirProduto(produto)} className="hover:text-black">
-                      <Trash className="w-5 h-5 text-red-600" />
-                    </button>
+                    <Edit className="w-5 h-5 text-gray-600" />
+                  </button>
+                  <button onClick={() => handleExcluirProduto(produto)} className="hover:text-black">
+                    <Trash className="w-5 h-5 text-red-600" />
+                  </button>
                 </div>
               </li>
             ))
+          ) : (
+            <p>Lista de compras vazia</p>
           )}
         </ul>
       </div>
@@ -341,13 +352,13 @@ export default function Page() {
                 onClick={handleConfirmarCompraAddToDespensa}
                 className="px-4 py-2 bg-white text-azul1 border border-azul1 rounded-md hover:bg-azul1 hover:text-white transition-colors duration-300"
               >
-                Sim, e adiciona-los a despensa
+                Sim, e adicioná-los à despensa
               </button>
               <button
                 onClick={handleConfirmarCompra}
                 className="px-4 py-2 bg-white text-azul1 border border-azul1 rounded-md hover:bg-azul1 hover:text-white transition-colors duration-300"
               >
-                Sim, e não adiciona-los a despensa
+                Sim, e não adicioná-los à despensa
               </button>
               <button
                 onClick={() => setIsConfirmarPressed(false)}
@@ -366,39 +377,39 @@ export default function Page() {
           <div className="bg-white p-6 rounded-md">
             <h3 className="text-xl font-semibold mb-4">{selectedProduto.nome}</h3>
             <div className="flex items-center justify-center space-x-2 mb-4">
-						<button
-							onClick={decrementQuantidade}
-							className="hover:text-[#6CB0BE]"
-						>
-							<MinusCircle className="w-5 h-5" />
-						</button>
-						<input
-							type="number"
-							className="text-center border rounded-md w-16"
-							value={tempQuantidade ?? ""}
-							onChange={(e) => setTempQuantidade(Number(e.target.value))}
-						/>
-						<button
-							onClick={incrementQuantidade}
-							className="hover:text-[#6CB0BE]"
-						>
-							<PlusCircle className="w-5 h-5" />
-						</button>
-					</div>
-					<div className="flex justify-center space-x-4">
-						<button
-							onClick={() => setIsEditModalOpen(false)}
-							className="px-4 py-2 bg-white text-azul1 border border-azul1 rounded-md hover:bg-azul1 hover:text-white transition-colors duration-300"
-						>
-							Cancelar
-						</button>
-						<button
-							onClick={handleSaveQuantidade}
-							className="px-4 py-2 bg-azul1 text-white rounded-md hover:bg-blue-600 transition-colors duration-300"
-						>
-							Alterar
-						</button>
-					</div>
+              <button
+                onClick={decrementQuantidade}
+                className="hover:text-[#6CB0BE]"
+              >
+                <MinusCircle className="w-5 h-5" />
+              </button>
+              <input
+                type="number"
+                className="text-center border rounded-md w-16"
+                value={tempQuantidade ?? ""}
+                onChange={(e) => setTempQuantidade(Number(e.target.value))}
+              />
+              <button
+                onClick={incrementQuantidade}
+                className="hover:text-[#6CB0BE]"
+              >
+                <PlusCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 bg-white text-azul1 border border-azul1 rounded-md hover:bg-azul1 hover:text-white transition-colors duration-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveQuantidade}
+                className="px-4 py-2 bg-azul1 text-white rounded-md hover:bg-blue-600 transition-colors duration-300"
+              >
+                Alterar
+              </button>
+            </div>
           </div>
         </div>
       )}
