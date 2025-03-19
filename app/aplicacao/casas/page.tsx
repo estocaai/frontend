@@ -62,15 +62,11 @@ function Casas() {
         alert("Usuário não autenticado!");
         return;
       }
-
-      // Atualiza no backend
       await axios.put(
         "https://estocaai-0a5bc1c57b9e.herokuapp.com/selecionar/casa",
         { casaId: id },
         { headers: { Authorization: `${token}` } }
       );
-
-      // Buscar os detalhes atualizados do usuário para refletir no frontend
       const userResponse = await axios.get("https://estocaai-0a5bc1c57b9e.herokuapp.com/users/details", {
         headers: { Authorization: `${token}` }
       });
@@ -81,7 +77,7 @@ function Casas() {
     }
   };
 
-  // Função para excluir a casa
+  // Função para excluir a casa e definir a nova seleção (anterior ou próxima)
   const handleDeleteCasa = async (id: string) => {
     if (!window.confirm("Tem certeza que deseja excluir essa casa?")) return;
     try {
@@ -90,12 +86,42 @@ function Casas() {
         alert("Usuário não autenticado!");
         return;
       }
+      
+      // Encontra o índice da casa a ser deletada na lista atual
+      const indexDeleted = casas.findIndex(casa => casa.id === id);
+      
+      // Executa a exclusão no backend
       await axios.delete(`https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${id}`, {
         headers: { Authorization: `${token}` }
       });
       alert("Casa excluída com sucesso!");
-      setCasaSelecionada(null);
-      fetchCasas();
+
+      // Buscar a lista atualizada de casas
+      const casasResponse = await axios.get("https://estocaai-0a5bc1c57b9e.herokuapp.com/casas", {
+        headers: { Authorization: `${token}` }
+      });
+      const novasCasas: Casa[] = casasResponse.data;
+      setCasas(novasCasas);
+
+      // Se a casa deletada era a selecionada, definimos a nova casa:
+      if (casaSelecionada === id && novasCasas.length > 0) {
+        let novaCasaSelecionada: Casa;
+        if (indexDeleted > 0) {
+          // Se houver uma casa anterior à excluída, seleciona-a
+          novaCasaSelecionada = novasCasas[indexDeleted - 1];
+        } else {
+          // Caso contrário, seleciona a casa na mesma posição (que será a próxima)
+          novaCasaSelecionada = novasCasas[0];
+        }
+        await axios.put(
+          "https://estocaai-0a5bc1c57b9e.herokuapp.com/selecionar/casa",
+          { casaId: novaCasaSelecionada.id },
+          { headers: { Authorization: `${token}` } }
+        );
+        setCasaSelecionada(novaCasaSelecionada.id);
+      } else if (novasCasas.length === 0) {
+        setCasaSelecionada(null);
+      }
     } catch (error) {
       console.error("Erro ao excluir casa:", error);
       alert("Falha ao excluir casa.");
