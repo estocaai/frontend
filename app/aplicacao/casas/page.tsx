@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from "react";
 import HeaderCasas from "@/app/ui/header/headerCasas";
 import axios from "axios";
+import { Trash } from 'iconoir-react';
 
 interface Casa {
   id: string;
@@ -80,6 +81,27 @@ function Casas() {
     }
   };
 
+  // Função para excluir a casa
+  const handleDeleteCasa = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir essa casa?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Usuário não autenticado!");
+        return;
+      }
+      await axios.delete(`https://estocaai-0a5bc1c57b9e.herokuapp.com/casas/${id}`, {
+        headers: { Authorization: `${token}` }
+      });
+      alert("Casa excluída com sucesso!");
+      setCasaSelecionada(null);
+      fetchCasas();
+    } catch (error) {
+      console.error("Erro ao excluir casa:", error);
+      alert("Falha ao excluir casa.");
+    }
+  };
+
   return (
     <div>
       <HeaderCasas onHouseCreated={fetchCasas} />
@@ -93,13 +115,24 @@ function Casas() {
           {casas.map((casa) => (
             <div
               key={casa.id}
-              className={`p-4 border rounded-lg shadow-md cursor-pointer transition duration-300 transform ${
+              className={`relative p-4 border rounded-lg shadow-md cursor-pointer transition duration-300 transform ${
                 casaSelecionada === casa.id
                   ? "border-[#8CC8D5] bg-[#8CC8D5] text-white scale-105 shadow-lg"
                   : "border-gray-300 bg-white hover:shadow-md"
               }`}
               onClick={() => selecionarCasa(casa.id)}
             >
+              {casaSelecionada === casa.id && (
+                <div className="absolute top-2 right-2">
+                  <Trash
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCasa(casa.id);
+                    }}
+                    className="cursor-pointer"
+                  />
+                </div>
+              )}
               <h2 className={`text-lg font-semibold ${casaSelecionada === casa.id ? "text-white" : "text-gray-900"}`}>
                 {casa.nome}
               </h2>
