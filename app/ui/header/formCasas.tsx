@@ -54,7 +54,7 @@ export default function FormCasas({ onClose }: FormCasasProps) {
       setNumero('');
       setComplemento('');
 
-      if (onClose) onClose();
+      if (onClose) onClose(); // Fecha o popout e atualiza a lista
       alert('Casa adicionada com sucesso!');
     } catch (error: any) {
       console.error('Erro ao adicionar casa:', error.response?.data || error.message);
